@@ -10,36 +10,32 @@ public class WorkWithFile {
 
     public static final int OPERATION_TYPE_POSITION = 0;
     public static final int AMOUNT_POSITION = 1;
+    public static final String OPERATION_SUPPLY = "supply";
+    public static final String OPERATION_BUY = "buy";
 
     private StringBuilder stringBuilder = new StringBuilder();
 
-    private int supply;
-    private int buy;
-    private int result;
-
     public void getStatistic(String fromFileName, String toFileName) {
-        supply = 0;
-        buy = 0;
-        result = 0;
         stringBuilder = new StringBuilder();
+        int supply = 0;
+        int buy = 0;
         String[] readFromFile = readDataFromFile(fromFileName);
         for (int i = 0; i < readFromFile.length; i++) {
             String[] splitedString = readFromFile[i].split(",");
-            switch (splitedString[OPERATION_TYPE_POSITION]) {
-                case ("supply"):
-                    supply += Integer.parseInt(splitedString[AMOUNT_POSITION]);
-                    break;
-
-                case ("buy"):
-                    buy += Integer.parseInt(splitedString[AMOUNT_POSITION]);
-                    break;
-                default:
-                    throw new RuntimeException("Array is empty");
+            if (splitedString[OPERATION_TYPE_POSITION].equals(OPERATION_SUPPLY)) {
+                supply += parsedStringData(splitedString[AMOUNT_POSITION]);
+            }
+            if (splitedString[OPERATION_TYPE_POSITION].equals(OPERATION_BUY)) {
+                buy += parsedStringData(splitedString[AMOUNT_POSITION]);
             }
         }
-        result = supply - buy;
+        writeDataToFile(toFileName, createReport(supply, buy));
+    }
 
+    private String[] createReport(int supply, int buy) {
         stringBuilder = new StringBuilder();
+        int result = supply - buy;
+
         stringBuilder.append("supply,").append(supply).append(" ")
                 .append(System.lineSeparator())
                 .append("buy,").append(buy).append(" ")
@@ -47,32 +43,26 @@ public class WorkWithFile {
                 .append("result,").append(result)
                 .append(System.lineSeparator());
 
-        String[] resultArray = stringBuilder.toString().split(" ");
-        writeDataToFile(toFileName, resultArray);
+        return stringBuilder.toString().split(" ");
     }
 
-    public String[] readDataFromFile(String fromFileName) {
+    private String[] readDataFromFile(String fromFileName) {
         stringBuilder = new StringBuilder();
-
         try (BufferedReader reader = new BufferedReader(new FileReader(fromFileName))) {
-            String readLine = reader.readLine();
-            while (readLine != null) {
+            String readLine;
+            while ((readLine = reader.readLine()) != null) {
                 stringBuilder.append(readLine).append(" ");
-                readLine = reader.readLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Can't read data from file", e);
+            throw new RuntimeException("Can't read data from file" + fromFileName, e);
         }
         if (!stringBuilder.toString().isEmpty()) {
-            String[] readData = stringBuilder.toString().split(" ");
-            return readData;
-        } else {
-            return new String[]{};
+            return stringBuilder.toString().split(" ");
         }
+        return new String[]{};
     }
 
-    public void writeDataToFile(String toFileName, String[] dataForWriting) {
-
+    private void writeDataToFile(String toFileName, String[] dataForWriting) {
         try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(toFileName))) {
             for (String data : dataForWriting) {
                 if (!data.isEmpty()) {
@@ -80,8 +70,12 @@ public class WorkWithFile {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Can't write data to file", e);
+            throw new RuntimeException("Can't write data to file" + toFileName, e);
         }
+    }
+
+    private int parsedStringData(String data) {
+        return Integer.parseInt(data);
     }
 
     public StringBuilder getStringBuilder() {
@@ -90,29 +84,5 @@ public class WorkWithFile {
 
     public void setStringBuilder(StringBuilder stringBuilder) {
         this.stringBuilder = stringBuilder;
-    }
-
-    public int getSupply() {
-        return supply;
-    }
-
-    public void setSupply(int supply) {
-        this.supply = supply;
-    }
-
-    public int getBuy() {
-        return buy;
-    }
-
-    public void setBuy(int buy) {
-        this.buy = buy;
-    }
-
-    public int getResult() {
-        return result;
-    }
-
-    public void setResult(int result) {
-        this.result = result;
     }
 }
