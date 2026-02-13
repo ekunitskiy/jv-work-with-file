@@ -12,14 +12,17 @@ public class WorkWithFile {
     public static final int AMOUNT_POSITION = 1;
     public static final String OPERATION_SUPPLY = "supply";
     public static final String OPERATION_BUY = "buy";
-
-    private StringBuilder stringBuilder = new StringBuilder();
+    public static final String OPERATION_RESULT = "result";
 
     public void getStatistic(String fromFileName, String toFileName) {
-        stringBuilder = new StringBuilder();
+        String[] readFromFile = readDataFromFile(fromFileName);
+        int[] stats = aggregateOperations(readFromFile);
+        writeDataToFile(toFileName, createReport(stats));
+    }
+
+    private int[] aggregateOperations(String[] readFromFile) {
         int supply = 0;
         int buy = 0;
-        String[] readFromFile = readDataFromFile(fromFileName);
         for (int i = 0; i < readFromFile.length; i++) {
             String[] splitedString = readFromFile[i].split(",");
             if (splitedString[OPERATION_TYPE_POSITION].equals(OPERATION_SUPPLY)) {
@@ -29,32 +32,35 @@ public class WorkWithFile {
                 buy += parsedStringData(splitedString[AMOUNT_POSITION]);
             }
         }
-        writeDataToFile(toFileName, createReport(supply, buy));
+        return new int[]{supply, buy};
     }
 
-    private String[] createReport(int supply, int buy) {
-        stringBuilder = new StringBuilder();
+    private String[] createReport(int[] stats) {
+
+        StringBuilder stringBuilder = new StringBuilder();
+        int supply = stats[0];
+        int buy = stats[1];
         int result = supply - buy;
 
-        stringBuilder.append("supply,").append(supply).append(" ")
+        stringBuilder.append(OPERATION_SUPPLY).append(",").append(supply).append(" ")
                 .append(System.lineSeparator())
-                .append("buy,").append(buy).append(" ")
+                .append(OPERATION_BUY).append(",").append(buy).append(" ")
                 .append(System.lineSeparator())
-                .append("result,").append(result)
+                .append(OPERATION_RESULT).append(",").append(result)
                 .append(System.lineSeparator());
 
         return stringBuilder.toString().split(" ");
     }
 
     private String[] readDataFromFile(String fromFileName) {
-        stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new FileReader(fromFileName))) {
             String readLine;
             while ((readLine = reader.readLine()) != null) {
                 stringBuilder.append(readLine).append(" ");
             }
         } catch (IOException e) {
-            throw new RuntimeException("Can't read data from file" + fromFileName, e);
+            throw new RuntimeException("Can't read data from file " + fromFileName, e);
         }
         if (!stringBuilder.toString().isEmpty()) {
             return stringBuilder.toString().split(" ");
@@ -70,19 +76,11 @@ public class WorkWithFile {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Can't write data to file" + toFileName, e);
+            throw new RuntimeException("Can't write data to file " + toFileName, e);
         }
     }
 
     private int parsedStringData(String data) {
         return Integer.parseInt(data);
-    }
-
-    public StringBuilder getStringBuilder() {
-        return stringBuilder;
-    }
-
-    public void setStringBuilder(StringBuilder stringBuilder) {
-        this.stringBuilder = stringBuilder;
     }
 }
